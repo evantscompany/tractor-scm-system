@@ -14,16 +14,32 @@ def create_tractor(db: Session, tractor: TractorCreate):
 def get_tractors(db: Session):
     return db.query(Tractor).all()
 
-def update_tractor(db: Session, tractor_id: int, tractor_data: TractorCreate):
+# app/crud/tractor.py (수정 부분)
+
+def update_tractor(db: Session, tractor_id: int, tractor_data: dict):
     db_tractor = db.query(Tractor).filter(Tractor.id == tractor_id).first()
-    if db_tractor:
-        # 값이 명시적으로 전달된 필드만 업데이트 (부분 업데이트 대응)
-        update_data = tractor_data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
+    if not db_tractor:
+        return None
+
+    # 업데이트할 수 있는 실제 DB 컬럼 목록만 정의합니다.
+    # 'histories', 'manufacturer', 'farmer' 등 관계 필드는 여기서 제외해야 합니다!
+    allowed_fields = [
+        "name", "model_number", "serial_number", 
+        "manufacturer_id", "farmer_id", "current_hours"
+    ]
+
+    for key, value in tractor_data.items():
+        if key in allowed_fields:
             setattr(db_tractor, key, value)
+
+    try:
         db.commit()
         db.refresh(db_tractor)
-    return db_tractor
+        return db_tractor
+    except Exception as e:
+        db.rollback()
+        print(f"Update Error: {e}")
+        raise e
 
 def delete_tractor(db: Session, tractor_id: int):
     db_tractor = db.query(Tractor).filter(Tractor.id == tractor_id).first()
