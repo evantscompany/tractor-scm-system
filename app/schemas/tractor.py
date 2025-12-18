@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional,List
 from app.schemas.manufacturer import Manufacturer
 
 # 1. 트랙터 조회 시 농민의 이름과 연락처만 살짝 담아줄 스키마
@@ -40,6 +40,16 @@ class Tractor(TractorBase):
     # 2. [핵심] 이 트랙터의 주인(농민) 정보를 포함시킵니다.
     # 모델(models/tractor.py)의 relationship 이름이 'farmer'라면 이대로 쓰시면 됩니다.
     farmer: Optional[FarmerInTractor] = None 
+    histories: List[MaintenanceHistorySchema]=[]
+    class Config:
+        from_attributes = True
+
+class MaintenanceHistorySchema(BaseModel):
+    id: int
+    category: str
+    description: Optional[str] = None
+    hours_at_event: Optional[float] = None
+    event_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -6,6 +6,7 @@ from app.config import get_db
 from app.models.tractor import Tractor
 from app.models.manufacturer import Manufacturer
 from app.models.farmer import Farmer
+from app.models.history import MaintenanceHistory
 
 router = APIRouter(prefix="/tractors", tags=["tractors"])
 
@@ -75,9 +76,26 @@ def update_tractor(tractor_id: int, update_data: dict, db: Session = Depends(get
     if not tractor:
         raise HTTPException(status_code=404, detail="수정할 대상을 찾을 수 없음")
 
+    # --- [정비 이력 자동 생성 로직] ---
+    # 프론트엔드에서 'maintenance_description' 이라는 키로 내용을 보낸다고 가정합니다.
+    m_desc = update_data.get('maintenance_description')
+    
+    if m_desc:
+        new_history = MaintenanceHistory(
+            tractor_id=tractor.id,
+            category=update_data.get('category', '일반정비'), # 카테고리 기본값
+            description=m_desc,
+            cost=float(update_data.get('cost', 0)),
+            hours_at_event=float(update_data.get('hours_at_event', 0))
+        )
+        db.add(new_history)
+    # ------------------------------
+
+
+
     # 2. 데이터 업데이트 (제조사 포함)
     for key, value in update_data.items():
-        if hasattr(tractor, key):
+        if hasattr(tractor, key) and key not in ['maintenance_description', 'category', 'cost', 'hours_at_event']:
             setattr(tractor, key, value)
     
     # 3. 가격 자동 재계산 (공급가나 관세가 바뀌었을 때를 대비)
