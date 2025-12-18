@@ -7,6 +7,7 @@ class MaintenanceInFarmer(BaseModel):
     id: int
     category: str
     description: Optional[str] = None
+    cost: Optional[float] = 0.0
     hours_at_event: Optional[float] = None
     event_date: Optional[datetime] = None
 
