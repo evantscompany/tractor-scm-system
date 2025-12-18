@@ -1,8 +1,13 @@
 import pandas as pd
 import random
 
-# 1. 주신 파일에서 시리얼 번호와 로케이션 추출
-df_tractor = pd.read_excel('tractor_scm_upload_final.xlsx')
+# 1. 파일 읽기 (openpyxl 설치 필요: pip install openpyxl)
+try:
+    df_tractor = pd.read_excel('tractor_scm_upload_final.xlsx')
+except:
+    # 엑셀 파일이 없을 경우를 대비해 브로가 올려준 파일명으로 시도
+    df_tractor = pd.read_csv('tractor_scm_upload_final.xlsx - Sheet1.csv')
+
 serials = df_tractor['serial_number'].tolist()
 locations = df_tractor['location'].tolist()
 
@@ -18,7 +23,7 @@ names_ko = ['김철수', '이영희', '박지성', '최민수', '정우성', '�
 names_vn = ['Nguyen Van A', 'Tran Thi B', 'Le Van C', 'Pham Van D']
 names_id = ['Budi', 'Siti', 'Agus', 'Dewi', 'Eko']
 
-# 3. 데이터 생성
+# 3. 데이터 생성 (백엔드 필드명에 맞춤)
 farmer_data = []
 for sn, loc in zip(serials, locations):
     if loc == 'KOREA':
@@ -38,11 +43,12 @@ for sn, loc in zip(serials, locations):
         'name': name,
         'phone': phone,
         'address': f"{loc} 지역 상세 주소",
-        'main_crop': crop,
-        'land_size': random.randint(1000, 5000), # 평 또는 sqm
-        'tractor_sn': sn, # 매칭 키
-        'joined_at': '2025-01-01'
+        'land_area': random.randint(1000, 5000), # 백엔드 필드명: land_area
+        'main_crop': crop,                        # 백엔드 필드명: main_crop
+        'serial_number': sn                       # 백엔드 필드명: serial_number
     })
 
+# 4. 엑셀 저장
 df_farmers = pd.DataFrame(farmer_data)
 df_farmers.to_excel('random_farmers_master.xlsx', index=False)
+print("백엔드 맞춤형 엑셀 파일 생성 완료: random_farmers_master.xlsx")

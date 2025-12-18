@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional,List
+from typing import Optional, List
 from app.schemas.manufacturer import Manufacturer
+# 브로의 history.py 파일에서 정의된 클래스를 가져옵니다.
+from app.schemas.history import MaintenanceHistory
 
-# 1. 트랙터 조회 시 농민의 이름과 연락처만 살짝 담아줄 스키마
+# 1. 트랙터 조회 시 농민 정보를 담을 스키마
 class FarmerInTractor(BaseModel):
     id: int
     name: str
@@ -12,10 +14,11 @@ class FarmerInTractor(BaseModel):
     class Config:
         from_attributes = True
 
+# 2. 트랙터 기본 구조
 class TractorBase(BaseModel):
     serial_number: str
     model: str
-    release_date: Optional[datetime] = None # datetime 오류 방지를 위해 Optional 권장
+    release_date: Optional[datetime] = None
     arrival_date: Optional[datetime] = None
     price: Optional[float] = None
     tax_rate: float = 0.0
@@ -23,33 +26,26 @@ class TractorBase(BaseModel):
     location: str = "KOREA"
     status: str = "STOCK"
     export_date: Optional[datetime] = None
-    
     attachment_type: Optional[str] = None
     horsepower: Optional[int] = None
     manufacturer_id: int
-    owner: Optional[int] = None # DB의 외래키 값
+    owner: Optional[int] = None 
 
 class TractorCreate(TractorBase):
     pass
 
+# 3. 최종 반환용 트랙터 스키마 (대시보드 매출 해결사)
 class Tractor(TractorBase):
     id: int
-    current_hours: float = 0.0 # 가동시간도 표시하기 위해 추가
+    current_hours: float = 0.0
     manufacturer: Optional[Manufacturer] = None 
     
-    # 2. [핵심] 이 트랙터의 주인(농민) 정보를 포함시킵니다.
-    # 모델(models/tractor.py)의 relationship 이름이 'farmer'라면 이대로 쓰시면 됩니다.
+    # [핵심] Dashboard.js가 t.histories를 찾으므로 리스트 이름을 histories로 유지합니다.
+    # history.py의 MaintenanceHistory 스키마를 리스트 형태로 담습니다.
+    histories: List[MaintenanceHistory] = [] 
+    
+    # 농민 정보 연동
     farmer: Optional[FarmerInTractor] = None 
-    histories: List[MaintenanceHistorySchema]=[]
-    class Config:
-        from_attributes = True
-
-class MaintenanceHistorySchema(BaseModel):
-    id: int
-    category: str
-    description: Optional[str] = None
-    hours_at_event: Optional[float] = None
-    event_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True
