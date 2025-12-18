@@ -5,13 +5,17 @@ import io
 from app.config import get_db
 from app.models.tractor import Tractor
 from app.models.manufacturer import Manufacturer
+from app.models.farmer import Farmer
 
 router = APIRouter(prefix="/tractors", tags=["tractors"])
 
 # 1. 조회 기능 (제조사 포함)
 @router.get("/")
 def get_tractors(db: Session = Depends(get_db)):
-    return db.query(Tractor).options(joinedload(Tractor.manufacturer)).all()
+    return db.query(Tractor).options(
+        joinedload(Tractor.manufacturer), #제조사
+        joinedload(Tractor.owner) #소유주
+        ).all()
 
 # 2. 엑셀 업로드 기능 (에러 방지 문법 적용)
 @router.post("/upload/")
@@ -84,29 +88,55 @@ def update_tractor(tractor_id: int, update_data: dict, db: Session = Depends(get
     return tractor
 
 # 1.5 신규 직접 등록 기능 추가
+# 1.5 신규 직접 등록 기능 (보완 완료)
 @router.post("/")
 def create_tractor(data: dict, db: Session = Depends(get_db)):
     try:
-        # 가격 자동 계산
-        base_price = float(data.get('base_price', 0))
-        tax_rate = float(data.get('tax_rate', 0))
+        # 1. 데이터 추출 (프론트엔드 키값 확인)
+        sn = data.get('serial_number')
+        model = data.get('model')
+        m_id = data.get('manufacturer_id')
+
+        # 2. 필수값 검증
+        if not sn or not model or not m_id:
+            return HTTPException(status_code=400, detail="시리얼번호, 모델명, 제조사는 필수입니다.")
+
+        # 3. 숫자 변환 (비어있으면 0으로 처리해서 에러 방지)
+        def to_float(val):
+            try: return float(val) if val else 0.0
+            except: return 0.0
+
+        def to_int(val):
+            try: return int(val) if val else 0
+            except: return 0
+
+        base_price = to_float(data.get('base_price'))
+        tax_rate = to_float(data.get('tax_rate'))
         calculated_price = base_price * (1 + tax_rate / 100)
 
+        # 4. DB 객체 생성
         new_tractor = Tractor(
-            serial_number=data.get('serial_number'),
-            model=data.get('model'),
-            manufacturer_id=int(data.get('manufacturer_id')),
-            horsepower=int(data.get('horsepower', 0)),
+            serial_number=str(sn),
+            model=str(model),
+            manufacturer_id=to_int(m_id),
+            horsepower=to_int(data.get('horsepower')),
             base_price=base_price,
             tax_rate=tax_rate,
             price=calculated_price,
             location=data.get('location', 'KOREA'),
-            status=data.get('status', 'STOCK')
+            status=data.get('status', 'STOCK'),
+            # 소유주(농민) 정보가 넘어온다면 추가
+            owner_id=data.get('farmer_id') if data.get('farmer_id') else None
         )
+        
         db.add(new_tractor)
         db.commit()
         db.refresh(new_tractor)
         return new_tractor
+
     except Exception as e:
         db.rollback()
+        print(f"--- 등록 에러 상세 내용 ---")
+        print(f"Error Type: {type(e)}")
+        print(f"Message: {str(e)}")
         raise HTTPException(status_code=400, detail=f"등록 실패: {str(e)}")
