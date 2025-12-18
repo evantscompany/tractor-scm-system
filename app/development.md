@@ -4,6 +4,8 @@
 - [x] Phase 1: 기본 재고 관리 시스템 완성 (FastAPI + React)
 - [x] Git 초기화 및 GitHub 원격 저장소 연결 완료 (`main`, `v1-origin`, `develop`)
 - [ ] Phase 2: CRM(농민) 및 생애주기 관리 설계 중 (현재 단계)
+- [x] 2025-12-18: Farmer, History 모델 정의 및 main.py 테이블 생성 설정 완료
+- [x] 2025-12-18: 농민(Farmer) CRUD 및 API 엔드포인트 구현 완료 추가! 📝
 
 ## 🏗️ 시스템 아키텍처 (Key Points)
 - **Backend**: FastAPI (api/crud/models/schemas 분리 구조)

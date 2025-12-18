@@ -12,6 +12,8 @@ class Tractor(Base):
     model = Column(String, nullable=False)
     release_date = Column(DateTime, nullable=False, default=datetime.now)
     arrival_date = Column(DateTime, nullable=False, default=datetime.now)
+    owner_id = Column(Integer,ForeignKey("farmers.id"),nullable=True) #소유주 외래키
+    current_hours = Column(Float,default=0.0) #누적 가동시간
     
     tax_rate = Column(Float, default=0.0)
     base_price = Column(Float, default=0.0)
@@ -24,3 +26,6 @@ class Tractor(Base):
     manufacturer_id = Column(Integer, ForeignKey("manufacturers.id"))
     # 관계 설정은 클래스 이름인 "Manufacturer"를 문자열로 바라봅니다.
     manufacturer = relationship("Manufacturer", back_populates="tractors")
+
+    owner = relationship("Farmer",back_populates="tractors")
+    histories = relationship("MaintenanceHistory", back_populates="tractor")
