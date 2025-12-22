@@ -4,6 +4,9 @@ from typing import List
 from app.config import get_db
 from app.schemas.history import MaintenanceHistory,MaintenanceHistoryCreate
 from app.crud import history as history_crud
+from app.models.history import MaintenanceHistory as MaintenanceHistoryModel
+from sqlalchemy import func
+
 
 router = APIRouter(prefix='/history', tags=["Maintenance History"])
 
@@ -33,3 +36,9 @@ def delete_maintenance_log(history_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "이력이 삭제되었습니다.", "id": history_id}
+
+#그냥 바로 백엔드에서 DB 내 히스토리 쌓인 정비 매출액 토탈 합산해서 프론트로 보내버리기
+@router.get("/stats/total-revenue")
+def get_maintenance_revenue_stats(db: Session = Depends(get_db)):
+    total_rev = db.query(func.sum(MaintenanceHistoryModel.cost)).scalar()or 0
+    return {"total_maintenance_revenue" : total_rev}

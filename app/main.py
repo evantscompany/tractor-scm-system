@@ -16,6 +16,7 @@ from app.api import manufacturer as manufacturer_api
 from app.api import farmer as farmer_api
 from app.api import history as history_api
 from app.api import upload as upload_api
+from app.api import tractors as tractors_api
 
 # 3. 서버 실행 시 DB 테이블 자동 생성
 Base.metadata.create_all(bind=engine)
@@ -38,7 +39,7 @@ app.include_router(manufacturer_api.router)
 app.include_router(farmer_api.router)
 app.include_router(history_api.router)
 app.include_router(upload_api.router) # 추가
-
+app.include_router(tractors_api.router)
 
 @app.get("/")
 def root():
